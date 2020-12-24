@@ -1,23 +1,44 @@
-import logo from './logo.svg';
-import './App.css';
+import { useContext, useEffect } from "react";
+
+import "./App.css";
+import { GET_USER } from "./constants/actions";
+import TransferMarket from "./container/TransferMarket";
+import { GlobalContext } from "./context/GlobalState";
 
 function App() {
+  const {
+    setUser,
+    user,
+    initializeConnection,
+    executeAction,
+    isConnectionInitialized,
+  } = useContext(GlobalContext);
+
+  useEffect(() => {
+    initializeConnection();
+  }, []); // eslint-disable-line
+
+  useEffect(() => {
+    if (isConnectionInitialized) {
+      executeAction(GET_USER, null, (payload) => {
+        setUser({
+          uid: payload?.currentUserId,
+          email: payload?.userDao?.authDelegate?.sessionUtas?.user?.email,
+        });
+      });
+    }
+  }, [isConnectionInitialized]); //eslint-disable-line
+
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      {!isConnectionInitialized && <span>Connecting...</span>}
+      {isConnectionInitialized && !user && <span>Could not find FUT user</span>}
+      {isConnectionInitialized && user?.email && (
+        <>
+          <h2>Account: {user?.email}</h2>
+          <TransferMarket />
+        </>
+      )}
     </div>
   );
 }
